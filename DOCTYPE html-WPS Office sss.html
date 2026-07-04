@@ -1,0 +1,739 @@
+﻿<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحلیلگر هوشمند CBC - دکتر نیما مهرجو</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* ===== بک‌گراند گلبول قرمز متحرک ===== */
+        .rbc-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .rbc {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.08;
+            animation: floatRBC linear infinite;
+            background: radial-gradient(circle at 30% 30%, #ff6b6b, #c0392b);
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.2);
+        }
+        .rbc::after {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 15%;
+            width: 30%;
+            height: 20%;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+            transform: rotate(-30deg);
+        }
+        @keyframes floatRBC {
+            0% { transform: translateY(100vh) rotate(0deg) scale(0.5); opacity: 0.05; }
+            10% { opacity: 0.1; }
+            90% { opacity: 0.1; }
+            100% { transform: translateY(-10vh) rotate(720deg) scale(1.2); opacity: 0.02; }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1000px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 30px;
+            padding: 35px 30px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* ===== هدر با اسم دکتر (تنها یکبار) ===== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            border-bottom: 3px solid #e74c3c;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .logo-icon {
+            font-size: 38px;
+            background: #e74c3c;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+        }
+        .header-title h1 {
+            color: #2c3e50;
+            font-size: 24px;
+            font-weight: 700;
+        }
+        .header-title .doctor-name {
+            color: #e74c3c;
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .header-title .doctor-name::before {
+            content: "🩺";
+            font-size: 20px;
+        }
+        .badge-version {
+            background: #2c3e50;
+            color: #fff;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* ===== انتخاب جنسیت و سن ===== */
+        .demographics {
+            background: #f8f9fa;
+            padding: 12px 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            flex-wrap: wrap;
+            border-right: 4px solid #e74c3c;
+        }
+        .demographics label {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .gender-options, .age-options {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .gender-options label, .age-options label {
+            font-weight: 400;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 4px 12px;
+            border-radius: 20px;
+            transition: 0.3s;
+            border: 2px solid transparent;
+        }
+        .gender-options input[type="radio"], .age-options input[type="radio"] {
+            display: none;
+        }
+        .gender-options input[type="radio"]:checked + span, 
+        .age-options input[type="radio"]:checked + span {
+            background: #e74c3c;
+            color: #fff;
+            padding: 4px 14px;
+            border-radius: 20px;
+        }
+        .gender-options label span, .age-options label span {
+            padding: 4px 14px;
+            border-radius: 20px;
+            transition: 0.3s;
+        }
+        .gender-options label:hover span, .age-options label:hover span {
+            background: #ecf0f1;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+            margin-bottom: 25px;
+        }
+        .field {
+            display: flex;
+            flex-direction: column;
+        }
+        .field label {
+            font-weight: 600;
+            font-size: 13px;
+            color: #34495e;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .field label .unit {
+            font-weight: 400;
+            color: #7f8c8d;
+            font-size: 11px;
+        }
+        .field input {
+            padding: 10px 12px;
+            border: 2px solid #dfe6e9;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: 0.3s;
+            background: #f8f9fa;
+            width: 100%;
+        }
+        .field input:focus {
+            border-color: #e74c3c;
+            background: #fff;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(231, 76, 60, 0.12);
+        }
+        .field input::placeholder {
+            color: #bdc3c7;
+            font-size: 12px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0 25px;
+        }
+        .btn {
+            padding: 13px 45px;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            background: #e74c3c;
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(231, 76, 60, 0.35);
+        }
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(231, 76, 60, 0.5);
+        }
+        .btn-secondary {
+            background: #34495e;
+            box-shadow: 0 4px 20px rgba(52, 73, 94, 0.3);
+        }
+        .btn-secondary:hover {
+            box-shadow: 0 8px 30px rgba(52, 73, 94, 0.4);
+        }
+
+        .result-box {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 25px;
+            margin-top: 20px;
+            border-right: 6px solid #e74c3c;
+            display: none;
+        }
+        .result-box.active {
+            display: block;
+            animation: fadeIn 0.6s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .result-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section {
+            margin: 16px 0;
+            padding: 16px 18px;
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .section h3 {
+            color: #2c3e50;
+            font-size: 17px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section h3 .badge {
+            background: #e74c3c;
+            color: #fff;
+            font-size: 11px;
+            padding: 2px 12px;
+            border-radius: 20px;
+        }
+        .section ul {
+            list-style: none;
+            padding-right: 0;
+        }
+        .section ul li {
+            padding: 6px 0 6px 20px;
+            border-bottom: 1px dashed #ecf0f1;
+            font-size: 14px;
+            line-height: 1.7;
+            position: relative;
+        }
+        .section ul li:before {
+            content: "•";
+            color: #e74c3c;
+            font-weight: 700;
+            position: absolute;
+            right: 0;
+        }
+        .section ul li:last-child {
+            border-bottom: none;
+        }
+        .status-tag {
+            display: inline-block;
+            padding: 2px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-right: 6px;
+        }
+        .status-normal { background: #d4edda; color: #155724; }
+        .status-low { background: #fff3cd; color: #856404; }
+        .status-high { background: #f8d7da; color: #721c24; }
+        .status-critical { background: #f5c6cb; color: #721c24; border: 2px solid #dc3545; animation: blink 1s infinite; }
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .doctor-footer {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 2px solid #ecf0f1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: #7f8c8d;
+        }
+        .footnote {
+            text-align: center;
+            font-size: 12px;
+            color: #95a5a6;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 20px 15px; }
+            .grid { grid-template-columns: 1fr 1fr; }
+            .header { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .btn { padding: 10px 25px; font-size: 14px; }
+            .demographics { flex-direction: column; align-items: stretch; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== بک‌گراند گلبول قرمز ===== -->
+<div class="rbc-bg" id="rbcBg"></div>
+
+<div class="container">
+    <!-- ===== هدر با اسم دکتر (فقط یکبار) ===== -->
+    <div class="header">
+        <div class="header-left">
+            <div class="logo-icon">🧬</div>
+            <div class="header-title">
+                <h1>تحلیلگر هوشمند CBC</h1>
+                <div class="doctor-name">دکتر نیما مهرجو</div>
+            </div>
+        </div>
+        <span class="badge-version">نسخه ۳.۰</span>
+    </div>
+
+    <!-- ===== انتخاب جنسیت و گروه سنی ===== -->
+    <div class="demographics">
+        <label>🧑‍⚕️ جنسیت:</label>
+        <div class="gender-options">
+            <label><input type="radio" name="gender" value="male" checked> <span>👨 مرد</span></label>
+            <label><input type="radio" name="gender" value="female"> <span>👩 زن</span></label>
+        </div>
+        
+        <label>📅 گروه سنی:</label>
+        <div class="age-options">
+            <label><input type="radio" name="age" value="child" checked> <span>🧒 کودک (۱-۱۲ سال)</span></label>
+            <label><input type="radio" name="age" value="adult"> <span>🧑 بزرگسال (۱۳-۶۰ سال)</span></label>
+            <label><input type="radio" name="age" value="elderly"> <span>👴 سالمند (۶۰+ سال)</span></label>
+        </div>
+    </div>
+
+    <!-- ===== ورودی‌ها ===== -->
+    <div class="grid">
+        <div class="field"><label>Hb <span class="unit">(g/dL)</span></label><input type="number" step="0.1" id="hb" placeholder="مثلاً 14.2"></div>
+        <div class="field"><label>MCV <span class="unit">(fL)</span></label><input type="number" step="0.1" id="mcv" placeholder="مثلاً 88"></div>
+        <div class="field"><label>MCH <span class="unit">(pg)</span></label><input type="number" step="0.1" id="mch" placeholder="مثلاً 30"></div>
+        <div class="field"><label>MCHC <span class="unit">(g/dL)</span></label><input type="number" step="0.1" id="mchc" placeholder="مثلاً 34"></div>
+        <div class="field"><label>WBC <span class="unit">(×10³/µL)</span></label><input type="number" step="0.1" id="wbc" placeholder="مثلاً 7.5"></div>
+        <div class="field"><label>PLT <span class="unit">(×10³/µL)</span></label><input type="number" step="1" id="plt" placeholder="مثلاً 250"></div>
+        <div class="field"><label>RBC <span class="unit">(×10⁶/µL)</span></label><input type="number" step="0.01" id="rbc" placeholder="مثلاً 4.8"></div>
+        <div class="field"><label>RDW <span class="unit">(%)</span></label><input type="number" step="0.1" id="rdw" placeholder="مثلاً 13.5"></div>
+    </div>
+
+    <!-- ===== دکمه‌ها ===== -->
+    <div class="btn-group">
+        <button class="btn" onclick="analyze()">🔍 تحلیل کن</button>
+        <button class="btn btn-secondary" onclick="clearAll()">🗑️ پاک کردن</button>
+    </div>
+
+    <!-- ===== نتیجه ===== -->
+    <div class="result-box" id="resultBox">
+        <div class="result-title">📊 گزارش تحلیل</div>
+        <div id="analysisContent"></div>
+    </div>
+
+    <div class="doctor-footer">
+        <span>📅 تاریخ: <span id="dateDisplay"></span></span>
+        <span style="color:#95a5a6;">⚕️ تحلیلگر کمکی CBC</span>
+    </div>
+    <div class="footnote">⚠️ این ابزار کمکی بوده و جایگزین تشخیص و درمان پزشک معالج نیست.</div>
+</div>
+
+<script>
+    // ===== تولید گلبول‌های قرمز در پس‌زمینه =====
+    function createRBCs() {
+        const bg = document.getElementById('rbcBg');
+        const count = 25;
+        for (let i = 0; i < count; i++) {
+            const rbc = document.createElement('div');
+            rbc.className = 'rbc';
+            const size = 30 + Math.random() * 70;
+            rbc.style.width = size + 'px';
+            rbc.style.height = size + 'px';
+            rbc.style.left = Math.random() * 100 + '%';
+            rbc.style.animationDuration = 15 + Math.random() * 25 + 's';
+            rbc.style.animationDelay = Math.random() * 20 + 's';
+            rbc.style.opacity = 0.04 + Math.random() * 0.08;
+            bg.appendChild(rbc);
+        }
+    }
+    createRBCs();
+
+    // ===== تاریخ امروز =====
+    document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('fa-IR');
+
+    // ===== توابع کمکی =====
+    function getVal(id) { return parseFloat(document.getElementById(id).value); }
+    function getGender() {
+        const radios = document.querySelectorAll('input[name="gender"]');
+        for (let r of radios) if (r.checked) return r.value;
+        return 'male';
+    }
+    function getAgeGroup() {
+        const radios = document.querySelectorAll('input[name="age"]');
+        for (let r of radios) if (r.checked) return r.value;
+        return 'adult';
+    }
+
+    // ===== رنج‌های نرمال بر اساس جنسیت + سن =====
+    function getRanges(gender, age) {
+        // رنج‌های پایه (بزرگسال)
+        let base = {
+            hb: { low: 13.5, high: 17.5, criticalLow: 7, criticalHigh: 20 },
+            mcv: { low: 80, high: 100, criticalLow: 60, criticalHigh: 120 },
+            mch: { low: 27, high: 33, criticalLow: 20, criticalHigh: 38 },
+            mchc: { low: 32, high: 36, criticalLow: 25, criticalHigh: 38 },
+            wbc: { low: 4.5, high: 11, criticalLow: 1.5, criticalHigh: 25 },
+            plt: { low: 150, high: 400, criticalLow: 50, criticalHigh: 600 },
+            rbc: { low: 4.5, high: 5.9, criticalLow: 2.5, criticalHigh: 7 },
+            rdw: { low: 11.5, high: 14.5, criticalLow: 9, criticalHigh: 18 }
+        };
+
+        // تنظیم بر اساس جنسیت
+        if (gender === 'female') {
+            base.hb.low = 12;
+            base.hb.high = 16;
+            base.hb.criticalHigh = 19;
+            base.rbc.low = 4;
+            base.rbc.high = 5.2;
+            base.rbc.criticalHigh = 6.5;
+        }
+
+        // تنظیم بر اساس سن
+        if (age === 'child') {
+            base.hb.low = 11;
+            base.hb.high = 15.5;
+            base.hb.criticalLow = 6;
+            base.hb.criticalHigh = 18;
+            base.mcv.low = 75;
+            base.mcv.high = 95;
+            base.mcv.criticalLow = 55;
+            base.mcv.criticalHigh = 110;
+            base.wbc.low = 5;
+            base.wbc.high = 15.5;
+            base.wbc.criticalLow = 2;
+            base.wbc.criticalHigh = 30;
+            base.plt.low = 150;
+            base.plt.high = 450;
+            base.plt.criticalLow = 50;
+            base.plt.criticalHigh = 700;
+            base.rbc.low = 3.8;
+            base.rbc.high = 5.2;
+            base.rbc.criticalLow = 2.5;
+            base.rbc.criticalHigh = 6.5;
+        } else if (age === 'elderly') {
+            base.hb.low = 12;
+            base.hb.high = 16;
+            base.hb.criticalLow = 7;
+            base.hb.criticalHigh = 19;
+            base.mcv.low = 78;
+            base.mcv.high = 102;
+            base.mcv.criticalLow = 60;
+            base.mcv.criticalHigh = 120;
+            base.wbc.low = 4;
+            base.wbc.high = 10.5;
+            base.wbc.criticalLow = 1.5;
+            base.wbc.criticalHigh = 25;
+            base.plt.low = 140;
+            base.plt.high = 380;
+            base.plt.criticalLow = 50;
+            base.plt.criticalHigh = 600;
+            base.rbc.low = 4;
+            base.rbc.high = 5.5;
+            base.rbc.criticalLow = 2.5;
+            base.rbc.criticalHigh = 6.5;
+        }
+
+        return base;
+    }
+
+    function statusTag(value, low, high, criticalLow, criticalHigh) {
+        if (criticalLow !== undefined && value < criticalLow) return '<span class="status-tag status-critical">⚠️ بحرانی (خیلی پایین)</span>';
+        if (criticalHigh !== undefined && value > criticalHigh) return '<span class="status-tag status-critical">⚠️ بحرانی (خیلی بالا)</span>';
+        if (value < low) return '<span class="status-tag status-low">🔽 پایین</span>';
+        if (value > high) return '<span class="status-tag status-high">🔼 بالا</span>';
+        return '<span class="status-tag status-normal">✅ نرمال</span>';
+    }
+
+    // ===== تشخیص‌های افتراقی تخصصی‌تر =====
+    function getSpecializedDiagnoses(hb, mcv, mch, mchc, wbc, plt, rbc, rdw, ranges) {
+        let diagnoses = [];
+        let actions = [];
+        let differentials = [];
+
+        // ---- کم‌خونی ها با تشخیص افتراقی دقیق ----
+        if (hb < ranges.hb.low) {
+            if (mcv < 80) {
+                diagnoses.push('🩸 کم‌خونی میکروسیتیک (MCV < 80)');
+                differentials.push('• فقر آهن (کمترین فریتین، افزایش TIBC)');
+                differentials.push('• تالاسمی مینور (افزایش RBC با MCV پایین)');
+                differentials.push('• کم‌خونی بیماری مزمن (فریتین نرمال یا بالا)');
+                differentials.push('• سایدروبلاستیک (نادر - افزایش آهن سرم)');
+                actions.push('اندازه‌گیری فریتین، آهن سرم، TIBC، الکتروفورز هموگلوبین');
+            } else if (mcv > 100) {
+                diagnoses.push('🩸 کم‌خونی ماکروسیتیک (MCV > 100)');
+                differentials.push('• کمبود B12 (افزایش Homocysteine و MMA)');
+                differentials.push('• کمبود فولات (افزایش Homocysteine نرمال MMA)');
+                differentials.push('• اختلال کبدی / الکلیسم (افزایش آنزیم‌های کبدی)');
+                differentials.push('• MDS (سندرم میلودیسپلاستیک - بررسی اسمیر و کاریوتایپ)');
+                differentials.push('• هیپوتیروئیدی (کم کاری تیروئید)');
+                actions.push('بررسی B12، فولات، LFT، TSH، و در صورت نیاز مشاوره هماتولوژی');
+            } else {
+                diagnoses.push('🩸 کم‌خونی نورموسیتیک (MCV 80-100)');
+                differentials.push('• کم‌خونی بیماری مزمن (التهاب، بدخیمی، عفونت مزمن)');
+                differentials.push('• خونریزی مخفی (بررسی FOBT، اندوسکوپی)');
+                differentials.push('• همولیز (افزایش LDH، کاهش هاپتوگلوبین، افزایش رتیکولوسیت)');
+                differentials.push('• نارسایی کلیه (کراتینین بالا، کاهش اریتروپویتین)');
+                differentials.push('• کم‌خونی آپلاستیک (پان سیتوپنی، هیپوسلولاریته مغز استخوان)');
+                actions.push('بررسی Retic count، LDH، هاپتوگلوبین، BUN/Cr، و در صورت نیاز اسمیر خون محیطی');
+            }
+        }
+
+        // ---- اختلالات گلبول سفید با افتراق ----
+        if (wbc < ranges.wbc.low) {
+            diagnoses.push('🦠 لکوپنی (WBC پایین)');
+            differentials.push('• عفونت ویروسی (HIV، هپاتیت، EBV، CMV)');
+            differentials.push('• داروها (شیمی‌درمانی، آنتی‌بیوتیک‌ها، NSAIDs)');
+            differentials.push('• اختلال مغز استخوان (آپلاستیک، لوسمی، MDS)');
+            differentials.push('• هیپراسپلنیسم (بزرگ‌شدن طحال)');
+            differentials.push('• کمبود ویتامین B12/فولات');
+            actions.push('بررسی افتراقی WBC، کشت خون، آزمایشات ویروسی، مشاوره هماتولوژی');
+        } else if (wbc > ranges.wbc.high) {
+            diagnoses.push('🦠 لکوسیتوز (WBC بالا)');
+            differentials.push('• عفونت باکتریال (نوتروفیلی - افزایش PMN)');
+            differentials.push('• عفونت ویروسی (لنفوسیتوز - افزایش لنفوسیت)');
+            differentials.push('• واکنش التهابی (افزایش CRP، ESR)');
+            differentials.push('• بدخیمی هماتولوژیک (لوسمی، لنفوم - بررسی بلاست‌ها)');
+            differentials.push('• استرس / مصرف کورتیکواستروئید (نوتروفیلی)');
+            actions.push('بررسی افتراقی WBC، CRP، ESR، کشت، و در صورت نیاز مشاوره هماتولوژی');
+        }
+
+        // ---- اختلالات پلاکت با افتراق ----
+        if (plt < ranges.plt.low) {
+            diagnoses.push('🧫 ترومبوسیتوپنی (PLT پایین)');
+            differentials.push('• ITP (ایمنی - افزایش آنتی‌بادی ضد پلاکت)');
+            differentials.push('• هیپراسپلنیسم (طحال بزرگ)');
+            differentials.push('• کاهش تولید (آپلاستیک، MDS، شیمی‌درمانی)');
+            differentials.push('• افزایش تخریب (HELLP، TTP، HUS، DIC)');
+            differentials.push('• داروها (هپارین، شیمی‌درمانی، آنتی‌بیوتیک‌ها)');
+            actions.push('بررسی اسمیر خون محیطی، آنتی‌بادی پلاکت، سونوگرافی طحال، LDH، هاپتوگلوبین');
+        } else if (plt > ranges.plt.high) {
+            diagnoses.push('🧫 ترومبوسیتوز (PLT بالا)');
+            differentials.push('• واکنشی (التهاب، فقر آهن، خونریزی، اسپلنکتومی)');
+            differentials.push('• میل پرولیفراتیو (ET - ترومبوسیتمی اولیه)');
+            differentials.push('• PV (پلی‌سیتمی ورا - همراه با افزایش RBC و Hb)');
+            differentials.push('• CML (لوسمی میلویید مزمن - افزایش WBC)');
+            actions.push('بررسی فریتین، CRP، JAK2 V617F (در صورت تداوم)، مشاوره هماتولوژی');
+        }
+
+        // ---- RDW بالا (آنیزوسیتوز) ----
+        if (rdw > ranges.rdw.high) {
+            diagnoses.push('📏 آنیزوسیتوز (RDW بالا)');
+            differentials.push('• فقر آهن (افزایش RDW در مراحل اولیه)');
+            differentials.push('• تالاسمی (RDW متغیر - همراه با MCV پایین)');
+            differentials.push('• کم‌خونی مختلط (همزمان فقر آهن + B12/فولات)');
+            differentials.push('• پس از خونریزی / تزریق خون (رتیکولوسیتوز)');
+            actions.push('بررسی مورفولوژی RBC در اسمیر خون محیطی، فریتین، آهن، B12، فولات');
+        }
+
+        // ---- MCHC پایین (هیپوکرومی) ----
+        if (mchc < ranges.mchc.low) {
+            diagnoses.push('💠 هیپوکرومی (MCHC پایین)');
+            differentials.push('• فقر آهن (کمبود آهن شدید)');
+            differentials.push('• تالاسمی (همراه با MCV پایین)');
+            differentials.push('• کم‌خونی سایدروبلاستیک (نادر)');
+            differentials.push('• مسمومیت با سرب (افزایش سرب خون)');
+            actions.push('بررسی فریتین، اشباع ترانسفرین، الکتروفورز هموگلوبین، سرب خون');
+        }
+
+        // ---- بررسی پان‌سیتوپنی ----
+        if (hb < ranges.hb.low && wbc < ranges.wbc.low && plt < ranges.plt.low) {
+            diagnoses.push('⚠️ پان‌سیتوپنی (کاهش هر ۳ رده سلولی)');
+            differentials.push('• کم‌خونی آپلاستیک (هیپوسلولار مغز استخوان)');
+            differentials.push('• MDS (سندرم میلودیسپلاستیک - دیسپلازی در اسمیر)');
+            differentials.push('• لوسمی حاد (وجود بلاست در خون محیطی)');
+            differentials.push('• هیپراسپلنیسم (طحال بزرگ - بررسی سونوگرافی)');
+            differentials.push('• کمبود B12/فولات شدید (با MCV بالا)');
+            differentials.push('• عفونت‌های شدید (سپسیس، HIV، ویروس‌های هپاتوتروپ)');
+            actions.push('اورژانس هماتولوژی - بیوپسی مغز استخوان، کاریوتایپ، مشاوره فوری');
+        }
+
+        // ---- هیچ تشخیصی ----
+        if (diagnoses.length === 0) {
+            diagnoses.push('✅ همه شاخص‌ها در محدوده نرمال هستند. هیچ اختلال واضحی مشاهده نمی‌شود.');
+            actions.push('در صورت وجود علائم بالینی، آزمایش‌های تکمیلی بر اساس شکایت بیمار انجام شود.');
+        }
+
+        return { diagnoses, differentials, actions };
+    }
+
+    // ===== تابع اصلی تحلیل =====
+    function analyze() {
+        const gender = getGender();
+        const age = getAgeGroup();
+        const ranges = getRanges(gender, age);
+
+        const hb = getVal('hb'), mcv = getVal('mcv'), mch = getVal('mch'), mchc = getVal('mchc');
+        const wbc = getVal('wbc'), plt = getVal('plt'), rbc = getVal('rbc'), rdw = getVal('rdw');
+
+        if (isNaN(hb) || isNaN(mcv) || isNaN(mch) || isNaN(mchc) || isNaN(wbc) || isNaN(plt) || isNaN(rbc) || isNaN(rdw)) {
+            alert('لطفاً تمام فیلدها را با مقادیر عددی پر کنید.');
+            return;
+        }
+
+        const genderLabel = gender === 'male' ? 'مرد' : 'زن';
+        const ageLabel = age === 'child' ? 'کودک' : (age === 'elderly' ? 'سالمند' : 'بزرگسال');
+        
+        let html = `<div style="margin-bottom:12px;font-weight:600;color:#2c3e50;">🧑‍⚕️ جنسیت: ${genderLabel} | 📅 گروه سنی: ${ageLabel}</div>`;
+
+        // ===== ۱. وضعیت پارامترها =====
+        html += `<div class="section"><h3>📌 وضعیت شاخص‌ها</h3><ul>`;
+        html += `<li>Hb: ${hb} g/dL ${statusTag(hb, ranges.hb.low, ranges.hb.hight, ranges.hb.criticalLow, ranges.hb.criticalHigh)}</li>`;
+        html += `<li>MCV: ${mcv} fL ${statusTag(mcv, ranges.mcv.low, ranges.mcv.high, ranges.mcv.criticalLow, ranges.mcv.criticalHigh)}</li>`;
+        html += `<li>MCH: ${mch} pg ${statusTag(mch, ranges.mch.low, ranges.mch.high, ranges.mch.criticalLow, ranges.mch.criticalHigh)}</li>`;
+        html += `<li>MCHC: ${mchc} g/dL ${statusTag(mchc, ranges.mchc.low, ranges.mchc.high, ranges.mchc.criticalLow, ranges.mchc.criticalHigh)}</li>`;
+        html += `<li>WBC: ${wbc} ×10³/µL ${statusTag(wbc, ranges.wbc.low, ranges.wbc.high, ranges.wbc.criticalLow, ranges.wbc.criticalHigh)}</li>`;
+        html += `<li>PLT: ${plt} ×10³/µL ${statusTag(plt, ranges.plt.low, ranges.plt.high, ranges.plt.criticalLow, ranges.plt.criticalHigh)}</li>`;
+        html += `<li>RBC: ${rbc} ×10⁶/µL ${statusTag(rbc, ranges.rbc.low, ranges.rbc.high, ranges.rbc.criticalLow, ranges.rbc.criticalHigh)}</li>`;
+        html += `<li>RDW: ${rdw} % ${statusTag(rdw, ranges.rdw.low, ranges.rdw.high, ranges.rdw.criticalLow, ranges.rdw.criticalHigh)}</li>`;
+        html += `</ul></div>`;
+
+        // ===== ۲. تشخیص‌های تخصصی =====
+        const result = getSpecializedDiagnoses(hb, mcv, mch, mchc, wbc, plt, rbc, rdw, ranges);
+        
+        if (result.diagnoses.length > 0) {
+            html += `<div class="section"><h3>🩺 تشخیص‌های احتمالی</h3><ul>`;
+            result.diagnoses.forEach(d => html += `<li>${d}</li>`);
+            html += `</ul></div>`;
+        }
+
+        if (result.differentials && result.differentials.length > 0) {
+            html += `<div class="section" style="background:#fef9f7;border-right:4px solid #e67e22;"><h3>🔬 تشخیص‌های افتراقی تخصصی</h3><ul>`;
+            result.differentials.forEach(d => html += `<li>${d}</li>`);
+            html += `</ul></div>`;
+        }
+
+        if (result.actions.length > 0) {
+            html += `<div class="section"><h3>📋 اقدامات تشخیصی بعدی</h3><ul>`;
+            result.actions.forEach(a => html += `<li>${a}</li>`);
+            html += `</ul></div>`;
+        }
+
+        // ===== ۳. جمع‌بندی هوشمند =====
+        let summary = '';
+        if (hb < ranges.hb.low && mcv < 80) summary = '🔴 الگوی کم‌خونی میکروسیتیک – فقر آهن و تالاسمی در اولویت. بررسی فریتین و الکتروفورز ضروری است.';
+        else if (hb < ranges.hb.low && mcv > 100) summary = '🟠 الگوی کم‌خونی ماکروسیتیک – کمبود B12 یا فولات محتمل. بررسی سطح ویتامین‌ها و عملکرد کبد.';
+        else if (hb < ranges.hb.low) summary = '🟡 کم‌خونی نورموسیتیک – نیاز به بررسی علت زمینه‌ای (التهاب، خونریزی، کلیه، همولیز).';
+        else if (wbc > ranges.wbc.high && plt > ranges.plt.high) summary = '🟣 واکنش میل پرولیفراتیو یا التهابی شدید – بررسی CRP، کشت و مشاوره هماتولوژی.';
+        else if (wbc < ranges.wbc.low && plt < ranges.plt.low) summary = '🔵 سیتوپنی دوگانه – احتمال اختلال مغز استخوان یا هیپراسپلنیسم. بررسی اسمیر و مشاوره فوری.';
+        else if (hb < ranges.hb.low && wbc < ranges.wbc.low && plt < ranges.plt.low) summary = '🚨 اورژانس هماتولوژی! پان‌سیتوپنی – نیاز به بیوپسی مغز استخوان و مشاوره فوری.';
+        else summary = '✅ پروفایل نسبتاً نرمال – در صورت وجود علائم بالینی، پیگیری با معاینه فیزیکی و شرح حال کامل توصیه می‌شود.';
+
+        html += `<div class="section" style="background:#eaf2f8;border-right:6px solid #2980b9;"><h3>🧠 جمع‌بندی هوشمند</h3><p style="font-size:16px;line-height:1.8;">${summary}</p></div>`;
+
+        document.getElementById('analysisContent').innerHTML = html;
+        document.getElementById('resultBox').classList.add('active');
+        window.scrollTo({ top: document.getElementById('resultBox').offsetTop - 20, behavior: 'smooth' });
+    }
+
+    function clearAll() {
+        document.querySelectorAll('input').forEach(inp => inp.value = '');
+        document.getElementById('resultBox').classList.remove('active');
+        document.getElementById('analysisContent').innerHTML = '';
+    }
+</script>
+</body>
+</html>
